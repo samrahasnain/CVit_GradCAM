@@ -2,16 +2,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from functools import partial
-from torchsummary import summary
 from timm.models.layers import DropPath, trunc_normal_
 import os
 import cv2
 import numpy
 import numpy as np
 import time
-from torch.utils.tensorboard import SummaryWriter
 from torchvision.utils import make_grid
-writer = SummaryWriter('log/run' + time.strftime("%d-%m"))
+
 im_size=(320,320)
 class Mlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
@@ -433,10 +431,6 @@ class Conformer(nn.Module):
         cls_tokens = self.cls_token.expand(B, -1, -1)
         conv_features=[]
         tran_features=[]
-        q=[]
-        k=[]
-        v=[]
-        x_att=[]
         # pdb.set_trace()
         # stem stage [N, 3, 224, 224] -> [N, 64, 56, 56]
         x_base = self.maxpool(self.act1(self.bn1(self.conv1(x))))
@@ -466,16 +460,13 @@ class Conformer(nn.Module):
             x, x_atti,y_t,qi,ki,vi = eval('self.conv_trans_' + str(i))(x, y_t)
             conv_features.append(x)
             tran_features.append(y_t)
-            q.append(qi)
-            k.append(ki)
-            v.append(vi)
-            x_att.append(x_atti)
-        
-        return conv_features,tran_features,q,k,v,x_att
 
-class JLModule(nn.Module):
+        
+        return conv_features,tran_features
+
+class BackboneExtractionModule(nn.Module):
     def __init__(self, backbone):
-        super(JLModule, self).__init__()
+        super(BackboneExtractionModule, self).__init__()
         self.backbone = backbone
         
 
@@ -489,13 +480,12 @@ class JLModule(nn.Module):
 
     def forward(self, x,y):
 
-        conv,tran,q,k,v,x_att = self.backbone(x,y)
+        conv,tran = self.backbone(x,y)
         '''print("Conformer Backbone")
         for i in range(len(conv)):
             print(i,"     ",conv[i].shape,tran[i].shape)'''
         
-
-        return conv,tran,q,k,v,x_att # list of tensor that compress model output
+        return conv,tran
 
 class ShuffleChannelAttention(nn.Module):
     def __init__(self, channel=64,reduction=16,kernel_size=3,groups=8):
@@ -605,7 +595,7 @@ class LDELayer(nn.Module):
             lde_out.append(last_out)
 
 
-        return lde_out,rgb_1,rgb_2,rgb_3,rgb_4,rgb_5,depth_1,depth_2,depth_3,depth_4,depth_5,rgbd_fusion_1,rgbd_fusion_2,rgbd_fusion_3,rgbd_fusion_4,rgbd_fusion_5
+        return lde_out
 
 
 class CoarseLayer(nn.Module):
@@ -759,11 +749,11 @@ class Decoder(nn.Module):
         return sal_final,sal_low,sal_med,sal_high,edge_rgbd0,edge_rgbd1,edge_rgbd2
 
 
-class JL_DCF(nn.Module):
-    def __init__(self,JLModule,lde_layers,coarse_layer,gde_layers,decoder):
-        super(JL_DCF, self).__init__()
+class GRA_Net(nn.Module):
+    def __init__(self,BackboneExtractionModule,lde_layers,coarse_layer,gde_layers,decoder):
+        super(GRA_Net, self).__init__()
         
-        self.JLModule = JLModule
+        self.BackboneExtractionModule = BackboneExtractionModule
         self.lde = lde_layers
         self.coarse_layer=coarse_layer
         self.gde_layers=gde_layers
@@ -771,8 +761,8 @@ class JL_DCF(nn.Module):
         self.final_conv=nn.Conv2d(8,1,1,1,0)
         
     def forward(self, f_all,f1_all):
-        x,y,q,k,v,Att = self.JLModule(f_all,f1_all)
-        lde_out,rgb_1,rgb_2,rgb_3,rgb_4,rgb_5,depth_1,depth_2,depth_3,depth_4,depth_5,rgbd_fusion_1,rgbd_fusion_2,rgbd_fusion_3,rgbd_fusion_4,rgbd_fusion_5= self.lde(x,y)
+        x,y = self.BackboneExtractionModule(f_all,f1_all)
+        lde_out= self.lde(x,y)
         coarse_sal_rgb,coarse_sal_depth=self.coarse_layer(x[12],y[12])
         rgb_h,rgb_m,depth_h,depth_m,rgb_l,depth_l=self.gde_layers(x,y,coarse_sal_rgb,coarse_sal_depth)
 
@@ -787,4 +777,4 @@ def build_model(network='conformer', base_model_cfg='conformer'):
         
    
 
-        return JL_DCF(JLModule(backbone),LDELayer(),CoarseLayer(),GDELayer(),Decoder())
+        return GRA_Net(BackboneExtractionModule(backbone),LDELayer(),CoarseLayer(),GDELayer(),Decoder())
