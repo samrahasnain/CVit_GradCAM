@@ -766,9 +766,9 @@ class GRA_Net(nn.Module):
         coarse_sal_rgb,coarse_sal_depth=self.coarse_layer(x[12],y[12])
         rgb_h,rgb_m,depth_h,depth_m,rgb_l,depth_l=self.gde_layers(x,y,coarse_sal_rgb,coarse_sal_depth)
 
-        sal_final,sal_low,sal_med,sal_high,e_rgbd0,e_rgbd1,e_rgbd2=self.decoder(lde_out ,rgb_h,rgb_m,depth_h,depth_m,rgb_l,depth_l)
+        sal_final,e_rgbd0,e_rgbd1,e_rgbd2=self.decoder(lde_out ,rgb_h,rgb_m,depth_h,depth_m,rgb_l,depth_l)
 
-        return sal_final,sal_low,sal_med,sal_high,coarse_sal_rgb,coarse_sal_depth,Att,e_rgbd0,e_rgbd1,e_rgbd2,rgb_1,rgb_2,rgb_3,rgb_4,rgb_5,depth_1,depth_2,depth_3,depth_4,depth_5,rgbd_fusion_1,rgbd_fusion_2,rgbd_fusion_3,rgbd_fusion_4,rgbd_fusion_5
+        return sal_final,coarse_sal_rgb,coarse_sal_depth,e_rgbd0,e_rgbd1,e_rgbd2
 
 def build_model(network='conformer', base_model_cfg='conformer'):
    
