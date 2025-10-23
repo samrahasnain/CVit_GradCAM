@@ -451,10 +451,7 @@ class Conformer(nn.Module):
         y_t,x_att1,q1,k1,v1 = self.trans_1(y_t)
         #print('y_t tran_1 q k  v',y_t.shape,q1.shape,k1.shape,v1.shape)
         tran_features.append(y_t)
-        q.append(q1)
-        k.append(k1)
-        v.append(v1)
-        x_att.append(x_att1)
+
         # 2 ~ final 
         for i in range(2, self.fin_stage):
             x, x_atti,y_t,qi,ki,vi = eval('self.conv_trans_' + str(i))(x, y_t)
