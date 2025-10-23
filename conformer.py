@@ -743,7 +743,7 @@ class Decoder(nn.Module):
         sal_final=edge_rgbd0+edge_rgbd1+edge_rgbd2+self.up2(self.up2(sal_low+self.up2((sal_med+(self.up2(sal_high))))))
         
 
-        return sal_final,sal_low,sal_med,sal_high,edge_rgbd0,edge_rgbd1,edge_rgbd2
+        return sal_final,edge_rgbd0,edge_rgbd1,edge_rgbd2
 
 
 class GRA_Net(nn.Module):
