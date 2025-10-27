@@ -759,13 +759,18 @@ class GRA_Net(nn.Module):
         
     def forward(self, f_all,f1_all):
         x,y = self.BackboneExtractionModule(f_all,f1_all)
+        # Save intermediate activations with gradient tracking
+        for f in x:
+            f.retain_grad()
+        for f in y:
+            f.retain_grad()
         lde_out= self.lde(x,y)
         coarse_sal_rgb,coarse_sal_depth=self.coarse_layer(x[12],y[12])
         rgb_h,rgb_m,depth_h,depth_m,rgb_l,depth_l=self.gde_layers(x,y,coarse_sal_rgb,coarse_sal_depth)
 
         sal_final,e_rgbd0,e_rgbd1,e_rgbd2=self.decoder(lde_out ,rgb_h,rgb_m,depth_h,depth_m,rgb_l,depth_l)
 
-        return sal_final,coarse_sal_rgb,coarse_sal_depth,e_rgbd0,e_rgbd1,e_rgbd2
+        return sal_final,coarse_sal_rgb,coarse_sal_depth,e_rgbd0,e_rgbd1,e_rgbd2,x,y
 
 def build_model(network='conformer', base_model_cfg='conformer'):
    
