@@ -166,8 +166,8 @@ class Solver(object):
                 cam_y = self.gradcam_pp_map(y8, grad_y8)
 
                 # Resize cams to saliency map size
-                cam_x_up = F.interpolate(cam_x, size=sal_pred.shape[2:], mode='bilinear', align_corners=False)
-                cam_y_up = F.interpolate(cam_y, size=sal_pred.shape[2:], mode='bilinear', align_corners=False)
+                cam_x_up = F.interpolate(cam_x, size=sal_final.shape[2:], mode='bilinear', align_corners=False)
+                cam_y_up = F.interpolate(cam_y, size=sal_final.shape[2:], mode='bilinear', align_corners=False)
 
                 # Saliency prediction after sigmoid
                 sal_sigmoid = torch.sigmoid(sal_final)
