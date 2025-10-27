@@ -150,7 +150,7 @@ class Solver(object):
                 B, N, C = y8.shape
                 H = W = int(N ** 0.5)
                 y8 = y8[:, 1:].transpose(1, 2).unflatten(2, (20, 20))
-                grad_y8 = grad_y8[:, 1:].transpose(1, 2).unflatten(2, (20, 20))
+                
                 sal_loss_coarse_rgb =  F.binary_cross_entropy_with_logits(coarse_sal_rgb, sal_label_coarse, reduction='sum')
                 sal_loss_coarse_depth =  F.binary_cross_entropy_with_logits(coarse_sal_depth, sal_label_coarse, reduction='sum')
                 sal_final_loss =  F.binary_cross_entropy_with_logits(sal_final, sal_label, reduction='sum')
