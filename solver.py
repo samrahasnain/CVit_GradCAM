@@ -104,17 +104,8 @@ class Solver(object):
         print('Test Done!')
     
 
-
     def gradcam_pp_map(features, grads):
-        """
-        Compute Grad-CAM++ attention map from features and gradients.
-        Keeps gradients for differentiability.
-        Args:
-            features: [B, C, H, W]
-            grads: [B, C, H, W]
-        Returns:
-            cam: [B, 1, H, W]
-        """
+
         numerator = grads.pow(2)
         denominator = 2 * grads.pow(2) + torch.sum(features * grads.pow(3), dim=(2, 3), keepdim=True)
         denominator = torch.where(denominator != 0.0, denominator, torch.ones_like(denominator))
@@ -124,10 +115,10 @@ class Solver(object):
         cam = torch.sum(weights * features, dim=1, keepdim=True)
         cam = F.relu(cam)
 
-    	# Normalize per image
-    	cam = (cam - cam.min(dim=2, keepdim=True)[0].min(dim=3, keepdim=True)[0]) / \
-          	(cam.max(dim=2, keepdim=True)[0].max(dim=3, keepdim=True)[0] + 1e-8)
-    	return cam
+        # Normalize per image
+        cam = (cam - cam.min(dim=2, keepdim=True)[0].min(dim=3, keepdim=True)[0]) / \
+            (cam.max(dim=2, keepdim=True)[0].max(dim=3, keepdim=True)[0] + 1e-8)
+        return cam
 
     # training phase
     def train(self):
