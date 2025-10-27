@@ -153,7 +153,7 @@ class Solver(object):
                 sal_label_coarse = F.interpolate(sal_label, size_coarse, mode='bilinear', align_corners=True)
                 
                 sal_final,coarse_sal_rgb,coarse_sal_depth,sal_edge_rgbd0,sal_edge_rgbd1,sal_edge_rgbd2,x_features, y_features = self.net(sal_image,sal_depth)
-                # Choose deep layer features
+               
                 x8 = x_features[8]  # CNN path
                 y8 = y_features[8]  # Transformer path
                 sal_loss_coarse_rgb =  F.binary_cross_entropy_with_logits(coarse_sal_rgb, sal_label_coarse, reduction='sum')
@@ -165,27 +165,27 @@ class Solver(object):
                 
                 sal_loss_fuse = sal_final_loss+512*edge_loss_rgbd0+1024*edge_loss_rgbd1+2048*edge_loss_rgbd2+sal_loss_coarse_rgb+sal_loss_coarse_depth
                 # --- Grad-CAM++ auxiliary attention loss ---
-    			# 1. Backprop from saliency output to get gradients w.r.t x[8] and y[8]
-    			sal_final.mean().backward(retain_graph=True)
+                # 1. Backprop from saliency output to get gradients w.r.t x[8] and y[8]
+                sal_final.mean().backward(retain_graph=True)
 
-    			grad_x8 = x8.grad
-    			grad_y8 = y8.grad
+                grad_x8 = x8.grad
+                grad_y8 = y8.grad
 
-   				cam_x = gradcam_pp_map(x8, grad_x8)
-    			cam_y = gradcam_pp_map(y8, grad_y8)
+                cam_x = gradcam_pp_map(x8, grad_x8)
+                cam_y = gradcam_pp_map(y8, grad_y8)
 
-    			# Resize cams to saliency map size
-    			cam_x_up = F.interpolate(cam_x, size=sal_pred.shape[2:], mode='bilinear', align_corners=False)
-    			cam_y_up = F.interpolate(cam_y, size=sal_pred.shape[2:], mode='bilinear', align_corners=False)
+                # Resize cams to saliency map size
+                cam_x_up = F.interpolate(cam_x, size=sal_pred.shape[2:], mode='bilinear', align_corners=False)
+                cam_y_up = F.interpolate(cam_y, size=sal_pred.shape[2:], mode='bilinear', align_corners=False)
 
-    			# Saliency prediction after sigmoid
-    			sal_sigmoid = torch.sigmoid(sal_final)
+                # Saliency prediction after sigmoid
+                sal_sigmoid = torch.sigmoid(sal_final)
 
-    			# Compute attention alignment losses
-    			loss_cam_x = F.mse_loss(cam_x_up, sal_sigmoid)
-    			loss_cam_y = F.mse_loss(cam_y_up, sal_sigmoid)
+                # Compute attention alignment losses
+                loss_cam_x = F.mse_loss(cam_x_up, sal_sigmoid)
+                loss_cam_y = F.mse_loss(cam_y_up, sal_sigmoid)
 
-    			total_loss = sal_loss_fuse+ 0.2* (loss_cam_x + loss_cam_y)
+                total_loss = sal_loss_fuse+ 0.2* (loss_cam_x + loss_cam_y)
 				sal_loss = total_loss/ (self.iter_size * self.config.batch_size)
                 r_sal_loss += sal_loss.data
                 r_sal_loss_item+=sal_loss.item() * sal_image.size(0)
@@ -204,11 +204,11 @@ class Solver(object):
             print('Epoch:[%2d/%2d] | Train Loss : %.3f' % (epoch, self.config.epoch,train_loss))
             import matplotlib.pyplot as plt
 
-			if epoch % 5 == 0:
-    			cam_show = cam_x_up[0, 0].detach().cpu().numpy()
-    			plt.imshow(cam_show, cmap='jet')
-    			plt.title('Grad-CAM++ Attention from x[8]')
-    			plt.show()
+            if epoch % 5 == 0:
+                cam_show = cam_x_up[0, 0].detach().cpu().numpy()
+                plt.imshow(cam_show, cmap='jet')
+                plt.title('Grad-CAM++ Attention from x[8]')
+                plt.show()
         # save model
         torch.save(self.net.state_dict(), '%s/final.pth' % self.config.save_folder)
         
