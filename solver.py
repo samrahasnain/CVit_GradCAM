@@ -104,7 +104,7 @@ class Solver(object):
         print('Test Done!')
     
 
-    def gradcam_pp_map(features, grads):
+    def gradcam_pp_map(self,features, grads):
 
         numerator = grads.pow(2)
         denominator = 2 * grads.pow(2) + torch.sum(features * grads.pow(3), dim=(2, 3), keepdim=True)
