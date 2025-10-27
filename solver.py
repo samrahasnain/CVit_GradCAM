@@ -162,8 +162,8 @@ class Solver(object):
                 grad_x8 = x8.grad
                 grad_y8 = y8.grad
 
-                cam_x = gradcam_pp_map(x8, grad_x8)
-                cam_y = gradcam_pp_map(y8, grad_y8)
+                cam_x = self.gradcam_pp_map(x8, grad_x8)
+                cam_y = self.gradcam_pp_map(y8, grad_y8)
 
                 # Resize cams to saliency map size
                 cam_x_up = F.interpolate(cam_x, size=sal_pred.shape[2:], mode='bilinear', align_corners=False)
