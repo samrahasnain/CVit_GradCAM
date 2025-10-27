@@ -157,10 +157,10 @@ class Solver(object):
                 sal_loss_fuse = sal_final_loss+512*edge_loss_rgbd0+1024*edge_loss_rgbd1+2048*edge_loss_rgbd2+sal_loss_coarse_rgb+sal_loss_coarse_depth
                 # --- Grad-CAM++ auxiliary attention loss ---
                 # 1. Backprop from saliency output to get gradients w.r.t x[8] and y[8]
-                sal_final.mean().backward(retain_graph=True)
+                
 
-                grad_x8 = x8.grad
-                grad_y8 = y8.grad
+                grad_x8 = torch.autograd.grad(sal_final.mean(), x8, retain_graph=True, create_graph=True)[0]
+                grad_y8 = torch.autograd.grad(sal_final.mean(), y8, retain_graph=True, create_graph=True)[0]
 
                 cam_x = self.gradcam_pp_map(x8, grad_x8)
                 cam_y = self.gradcam_pp_map(y8, grad_y8)
