@@ -177,7 +177,7 @@ class Solver(object):
                 loss_cam_y = F.mse_loss(cam_y_up, sal_sigmoid)
 
                 total_loss = sal_loss_fuse+ 0.2* (loss_cam_x + loss_cam_y)
-				sal_loss = total_loss/ (self.iter_size * self.config.batch_size)
+                sal_loss = total_loss/ (self.iter_size * self.config.batch_size)
                 r_sal_loss += sal_loss.data
                 r_sal_loss_item+=sal_loss.item() * sal_image.size(0)
                 sal_loss.backward()
