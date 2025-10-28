@@ -146,10 +146,10 @@ class Solver(object):
                 sal_final,coarse_sal_rgb,coarse_sal_depth,sal_edge_rgbd0,sal_edge_rgbd1,sal_edge_rgbd2,x_features, y_features = self.net(sal_image,sal_depth)
                
                 x8 = x_features[8]  # CNN path
-                y8 = y_features[8]  # Transformer path
-                B, N, C = y8.shape
-                H = W = int(N ** 0.5)
-                y8 = y8[:, 1:].transpose(1, 2).unflatten(2, (20, 20))
+                #y8 = y_features[8]  # Transformer path
+                #B, N, C = y8.shape
+                #H = W = int(N ** 0.5)
+                #y8 = y8[:, 1:].transpose(1, 2).unflatten(2, (20, 20))
                 
                 sal_loss_coarse_rgb =  F.binary_cross_entropy_with_logits(coarse_sal_rgb, sal_label_coarse, reduction='sum')
                 sal_loss_coarse_depth =  F.binary_cross_entropy_with_logits(coarse_sal_depth, sal_label_coarse, reduction='sum')
@@ -164,23 +164,23 @@ class Solver(object):
                 
 
                 grad_x8 = torch.autograd.grad(sal_final.mean(), x8, retain_graph=True, create_graph=True)[0]
-                grad_y8 = torch.autograd.grad(sal_final.mean(), y8, retain_graph=True, create_graph=True)[0]
+                #grad_y8 = torch.autograd.grad(sal_final.mean(), y8, retain_graph=True, create_graph=True)[0]
 
                 cam_x = self.gradcam_pp_map(x8, grad_x8)
-                cam_y = self.gradcam_pp_map(y8, grad_y8)
+                #cam_y = self.gradcam_pp_map(y8, grad_y8)
 
                 # Resize cams to saliency map size
                 cam_x_up = F.interpolate(cam_x, size=sal_final.shape[2:], mode='bilinear', align_corners=False)
-                cam_y_up = F.interpolate(cam_y, size=sal_final.shape[2:], mode='bilinear', align_corners=False)
+                #cam_y_up = F.interpolate(cam_y, size=sal_final.shape[2:], mode='bilinear', align_corners=False)
 
                 # Saliency prediction after sigmoid
                 sal_sigmoid = torch.sigmoid(sal_final)
 
                 # Compute attention alignment losses
                 loss_cam_x = F.mse_loss(cam_x_up, sal_sigmoid)
-                loss_cam_y = F.mse_loss(cam_y_up, sal_sigmoid)
+                #loss_cam_y = F.mse_loss(cam_y_up, sal_sigmoid)
 
-                total_loss = sal_loss_fuse+ 0.2* (loss_cam_x + loss_cam_y)
+                total_loss = sal_loss_fuse+ 0.2* (loss_cam_x)
                 sal_loss = total_loss/ (self.iter_size * self.config.batch_size)
                 r_sal_loss += sal_loss.data
                 r_sal_loss_item+=sal_loss.item() * sal_image.size(0)
